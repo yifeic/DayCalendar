@@ -17,9 +17,19 @@ var {
 var DayCalendarDemo = React.createClass({
   render: function() {
     
+    var start = new Date();
+    var end = new Date();
+    end.setHours(19);
+    end.setMinutes(0);
+    end.setSeconds(0);
+    var events = [
+      {title: 'haha haha fjeiofjweio fe fe few fewfew fewfewfew fe fef fewfwfew fefewf', startAt: start, endAt: end}
+
+    ];
+
     return (
       <View style={styles.container}>
-      <DayCalendar style={styles.dayCalendar} />
+      <DayCalendar style={styles.dayCalendar} events={events} />
       </View>
     );
   }
@@ -28,7 +38,6 @@ var DayCalendarDemo = React.createClass({
 var styles = StyleSheet.create({
   container: {
     flex: 1,
-    // paddingTop: 75,
   },
 
 
