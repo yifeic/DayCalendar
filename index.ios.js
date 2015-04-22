@@ -23,7 +23,7 @@ var DayCalendarDemo = React.createClass({
     end.setMinutes(0);
     end.setSeconds(0);
     var events = [
-      {title: 'haha haha fjeiofjweio fe fe few fewfew fewfewfew fe fef fewfwfew fefewf', startAt: start, endAt: end}
+      {title: 'P I J M haha haha fjeiofjweio fe fe few fewfew fewfewfew fe fef fewfwfew fefewf', startAt: start, endAt: end}
 
     ];
 

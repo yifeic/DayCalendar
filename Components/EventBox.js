@@ -22,6 +22,7 @@ EventBox.propTypes = { title: React.PropTypes.string };
 
 var styles = StyleSheet.create({
   eventBox: {
+    flex: 1,
     backgroundColor: 'rgba(234, 245, 252, 0.8)',
   }
 });
