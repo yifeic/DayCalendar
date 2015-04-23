@@ -18,12 +18,15 @@ var DayCalendarDemo = React.createClass({
   render: function() {
     
     var start = new Date();
+    start.setHours(17);
+    start.setMinutes(0);
+    start.setSeconds(0);
     var end = new Date();
     end.setHours(19);
     end.setMinutes(0);
     end.setSeconds(0);
     var events = [
-      {title: 'P I J M haha haha fjeiofjweio fe fe few fewfew fewfewfew fe fef fewfwfew fefewf', startAt: start, endAt: end}
+      {title: 'Lorem ipsum dolor sit amet, ius ad pertinax oportere accommodare,', startAt: start, endAt: end}
 
     ];
 

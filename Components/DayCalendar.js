@@ -156,7 +156,7 @@ var DayCalendar = React.createClass({
 
       return (
         <View ref={(box) => {this.draggableView = box;}} style={[eventBoxBaseStyle, topAndHeight]} {...this.panResponder.panHandlers}>
-          <EventBox />
+          <EventBox title={event.title}/>
         </View>
       );
     };
