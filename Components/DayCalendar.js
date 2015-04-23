@@ -32,11 +32,12 @@ var DayCalendar = React.createClass({
   propTypes: { 
     day: React.PropTypes.instanceOf(Date), 
     events: React.PropTypes.array,
+    newEvent: React.PropTypes.object,
     timelineHeight: React.PropTypes.number,
     timelineGap: React.PropTypes.number,
   },
 
-  defaultProps: { day: new Date(), events: [], timelineHeight: 1, timelineGap: 60 },
+  defaultProps: { day: new Date(), events: [], newEvent: null, timelineHeight: 1, timelineGap: 60 },
 
   componentWillMount: function() {
       this.panResponder = PanResponder.create({
@@ -101,9 +102,11 @@ var DayCalendar = React.createClass({
     var endOfDay = moment(this.props.day).hour(24).minute(0).second(0);
 
     var isEventInDay = (event) => !(endOfDay.isBefore(event.startAt) || beginOfDay.isAfter(event.endAt));
-    var createEventBox = function (event, i) {
 
+    var timelineGap = this.props.timelineGap;
+    var timelineHeight = this.props.timelineHeight;
 
+    var topAndHeightFromEvent = (event) => {
       var startAt = beginOfDay.isAfter(event.startAt) ? beginOfDay : moment(event.startAt);
       var endAt = endOfDay.isBefore(event.endAt) ? endOfDay : moment(event.endAt);
 
@@ -113,27 +116,43 @@ var DayCalendar = React.createClass({
       var startAtInMinutes = startAt.diff(beginOfDay, 'minutes');
       var lengthInMinutes = endAt.diff(startAt, 'minutes');
 
-      var totalHeight = (HOURS_COUNT-1) * (this.props.timelineGap + this.props.timelineHeight);
+      var totalHeight = (HOURS_COUNT-1) * (timelineGap + timelineHeight);
       
-      var eventBoxTop = startAtInMinutes / MINUTES_INA_DAY * totalHeight;
-      var eventBoxHeight = lengthInMinutes / MINUTES_INA_DAY * totalHeight;
+      var top = startAtInMinutes / MINUTES_INA_DAY * totalHeight;
+      var height = lengthInMinutes / MINUTES_INA_DAY * totalHeight;
 
-      return (<EventBox style={{position: 'absolute', top: eventBoxTop, height: eventBoxHeight, left: 80, right: 20}} title={event.title} />);
+      return {top, height};
+    }
+
+    var eventBoxBaseStyle = {position: 'absolute', left: 80, right: 20};
+
+    var createEventBox = (event, i) => {
+
+      var topAndHeight = topAndHeightFromEvent(event);
+
+      return (<EventBox style={[eventBoxBaseStyle, topAndHeight]} title={event.title} />);
     };
 
+    var createNewEventBox = (event) => {
+      if (!event) {
+        return null;
+      }
 
+      var topAndHeight = topAndHeightFromEvent(event);
 
+      return (
+        <View ref={(box) => {this.draggableView = box;}} style={[eventBoxBaseStyle, topAndHeight]} {...this.panResponder.panHandlers}>
+          <EventBox />
+        </View>
+      );
+    };
 
-// {this.props.events.filter(isEventInDay).map(createEventBox.bind(this))}
     return (
       <ScrollView ref={(scrollView) => {this.scrollView = scrollView;}}>
         
         {HOURS.map(createTimeline)}
-        
-        
-        <View ref={(box) => {this.draggableView = box;}} style={this.draggableViewStyle} {...this.panResponder.panHandlers}>
-          <EventBox />
-        </View>
+        {this.props.events.filter(isEventInDay).map(createEventBox)}
+        {this.props.newEvent && createNewEventBox(this.props.newEvent)}
 
       </ScrollView>
     );
