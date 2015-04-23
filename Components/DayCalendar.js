@@ -24,9 +24,9 @@ var MINUTES_INA_DAY = 60*24;
 var DayCalendar = React.createClass({
 
   panResponder: {},
-  draggableViewPreviousTop: 100,
+  draggableViewPreviousTop: 0,
   draggableView: null,
-  draggableViewStyle: {position: 'absolute', left: 80, right: 20, top: this.draggableViewPreviousTop, height: 100, borderRadius: 3},
+  draggableViewTopAndHeight: {},
   scrollView: null,
 
   propTypes: { 
@@ -42,7 +42,7 @@ var DayCalendar = React.createClass({
   },
 
   componentWillMount: function() {
-      this.panResponder = PanResponder.create({
+    this.panResponder = PanResponder.create({
       onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
       onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
       onPanResponderGrant: this._handlePanResponderGrant,
@@ -52,17 +52,18 @@ var DayCalendar = React.createClass({
       onPanResponderTerminate: this._handlePanResponderEnd,
     });
 
-      this.draggableViewStyle.top = this.draggableViewPreviousTop;
+    if (this.props.newEvent) {
+      this.draggableViewTopAndHeight = this._topAndHeightFromEvent(this.props.newEvent);
+      this.draggableViewPreviousTop = this.draggableViewTopAndHeight.top;
+    }
   },
 
   componentDidMount: function() {
-    // this._updatedraggableViewPosition();
-
+    this._updateDraggableViewPosition();
   },
 
   _updateDraggableViewPosition: function() {
-    // this.draggableView && this.draggableView.setNativeProps({top: this.draggableViewStyle.top});
-
+    this.draggableView && this.draggableView.setNativeProps(this.draggableViewTopAndHeight);
   },
 
   _onResponderTerminationRequest: function() {
@@ -87,7 +88,7 @@ var DayCalendar = React.createClass({
   },
 
   _handlePanResponderMove: function(e, gestureState) {
-    this.draggableViewStyle.top = this.draggableViewPreviousTop + gestureState.dy;
+    this.draggableViewTopAndHeight.top = this.draggableViewPreviousTop + gestureState.dy;
     this._updateDraggableViewPosition();
   },
 
