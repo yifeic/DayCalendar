@@ -37,7 +37,9 @@ var DayCalendar = React.createClass({
     timelineGap: React.PropTypes.number,
   },
 
-  defaultProps: { day: new Date(), events: [], newEvent: null, timelineHeight: 1, timelineGap: 60 },
+  getDefaultProps: function() {
+    return { day: new Date(), events: [], newEvent: null, timelineHeight: 1, timelineGap: 59 };
+  },
 
   componentWillMount: function() {
       this.panResponder = PanResponder.create({
@@ -59,7 +61,7 @@ var DayCalendar = React.createClass({
   },
 
   _updateDraggableViewPosition: function() {
-    this.draggableView && this.draggableView.setNativeProps({top: this.draggableViewStyle.top});
+    // this.draggableView && this.draggableView.setNativeProps({top: this.draggableViewStyle.top});
 
   },
 
@@ -96,49 +98,60 @@ var DayCalendar = React.createClass({
     this.draggableViewPreviousTop += gestureState.dy;
   },
 
+  _beginOfDay: function() {
+    return moment(this.props.day).hour(0).minute(0).second(0);
+  },
+
+  _endOfDay: function () {
+    return moment(this.props.day).hour(24).minute(0).second(0);
+  },
+
+  _topAndHeightFromEvent: function(event) {
+    var beginOfDay = this._beginOfDay();
+    var endOfDay = this._endOfDay();
+
+    var startAt = beginOfDay.isAfter(event.startAt) ? beginOfDay : moment(event.startAt);
+    var endAt = endOfDay.isBefore(event.endAt) ? endOfDay : moment(event.endAt);
+
+    startAt = startAt.second(0);
+    endAt = endAt.second(0);
+
+    var startAtInMinutes = startAt.diff(beginOfDay, 'minutes');
+    var lengthInMinutes = endAt.diff(startAt, 'minutes');
+
+    var totalHeight = (HOURS_COUNT-1) * (this.props.timelineGap + this.props.timelineHeight);
+    
+    var top = startAtInMinutes / MINUTES_INA_DAY * totalHeight;
+    var height = lengthInMinutes / MINUTES_INA_DAY * totalHeight;
+
+    return {top, height};
+  },
+
+  _isEventInDay: function(event) {
+    var beginOfDay = this._beginOfDay();
+    var endOfDay = this._endOfDay();
+    return !(endOfDay.isBefore(event.startAt) || beginOfDay.isAfter(event.endAt));
+  },
+
+  _filteredEvents: function() {
+    return this.props.events.filter(this._isEventInDay);
+  },
+
   render: function() {
     var createTimeline = (time, i) => <Timeline key={i} time={time} style={i == HOURS_COUNT-1 ? styles.timelineLast : styles.timeline} />;
-    var beginOfDay = moment(this.props.day).hour(0).minute(0).second(0);
-    var endOfDay = moment(this.props.day).hour(24).minute(0).second(0);
-
-    var isEventInDay = (event) => !(endOfDay.isBefore(event.startAt) || beginOfDay.isAfter(event.endAt));
-
-    var timelineGap = this.props.timelineGap;
-    var timelineHeight = this.props.timelineHeight;
-
-    var topAndHeightFromEvent = (event) => {
-      var startAt = beginOfDay.isAfter(event.startAt) ? beginOfDay : moment(event.startAt);
-      var endAt = endOfDay.isBefore(event.endAt) ? endOfDay : moment(event.endAt);
-
-      startAt = startAt.second(0);
-      endAt = endAt.second(0);
-
-      var startAtInMinutes = startAt.diff(beginOfDay, 'minutes');
-      var lengthInMinutes = endAt.diff(startAt, 'minutes');
-
-      var totalHeight = (HOURS_COUNT-1) * (timelineGap + timelineHeight);
-      
-      var top = startAtInMinutes / MINUTES_INA_DAY * totalHeight;
-      var height = lengthInMinutes / MINUTES_INA_DAY * totalHeight;
-
-      return {top, height};
-    }
 
     var eventBoxBaseStyle = {position: 'absolute', left: 80, right: 20};
 
     var createEventBox = (event, i) => {
 
-      var topAndHeight = topAndHeightFromEvent(event);
+      var topAndHeight = this._topAndHeightFromEvent(event);
 
       return (<EventBox style={[eventBoxBaseStyle, topAndHeight]} title={event.title} />);
     };
 
     var createNewEventBox = (event) => {
-      if (!event) {
-        return null;
-      }
 
-      var topAndHeight = topAndHeightFromEvent(event);
+      var topAndHeight = this._topAndHeightFromEvent(event);
 
       return (
         <View ref={(box) => {this.draggableView = box;}} style={[eventBoxBaseStyle, topAndHeight]} {...this.panResponder.panHandlers}>
@@ -151,7 +164,7 @@ var DayCalendar = React.createClass({
       <ScrollView ref={(scrollView) => {this.scrollView = scrollView;}}>
         
         {HOURS.map(createTimeline)}
-        {this.props.events.filter(isEventInDay).map(createEventBox)}
+        {this._filteredEvents().map(createEventBox)}
         {this.props.newEvent && createNewEventBox(this.props.newEvent)}
 
       </ScrollView>

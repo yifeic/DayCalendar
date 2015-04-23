@@ -29,7 +29,7 @@ var DayCalendarDemo = React.createClass({
 
     return (
       <View style={styles.container}>
-      <DayCalendar style={styles.dayCalendar} events={events} />
+      <DayCalendar style={styles.dayCalendar} newEvent={events[0]} />
       </View>
     );
   }
