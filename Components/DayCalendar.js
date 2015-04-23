@@ -3,7 +3,6 @@
 var React = require('react-native');
 var Timeline = require('./Timeline');
 var EventBox = require('./EventBox');
-var DraggableEventBox = require('./DraggableEventBox');
 var moment = require('moment');
 
 var {
@@ -25,9 +24,10 @@ var MINUTES_INA_DAY = 60*24;
 var DayCalendar = React.createClass({
 
   panResponder: {},
-  draggableEventBoxPreviousTop: 100,
-  draggableEventBox: null,
-  draggableEventBoxStyle: {position: 'absolute', left: 80, right: 20, top: this.draggableEventBoxPreviousTop, height: 100, borderRadius: 3},
+  draggableViewPreviousTop: 100,
+  draggableView: null,
+  draggableViewStyle: {position: 'absolute', left: 80, right: 20, top: this.draggableViewPreviousTop, height: 100, borderRadius: 3},
+  scrollView: null,
 
   propTypes: { 
     day: React.PropTypes.instanceOf(Date), 
@@ -40,25 +40,25 @@ var DayCalendar = React.createClass({
 
   componentWillMount: function() {
       this.panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
+      onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
       onPanResponderGrant: this._handlePanResponderGrant,
       onPanResponderMove: this._handlePanResponderMove,
-      onResponderTerminationRequest: this._onResponderTerminationRequest,
+      onPanResponderTerminationRequest: this._onResponderTerminationRequest,
       onPanResponderRelease: this._handlePanResponderEnd,
       onPanResponderTerminate: this._handlePanResponderEnd,
     });
 
-      this.draggableEventBoxStyle.top = this.draggableEventBoxPreviousTop;
+      this.draggableViewStyle.top = this.draggableViewPreviousTop;
   },
 
   componentDidMount: function() {
-    // this._updateDraggableEventBoxPosition();
+    // this._updatedraggableViewPosition();
 
   },
 
-  _updateDraggableEventBoxPosition: function() {
-    this.draggableEventBox && this.draggableEventBox.setNativeProps({top: this.draggableEventBoxStyle.top});
+  _updateDraggableViewPosition: function() {
+    this.draggableView && this.draggableView.setNativeProps({top: this.draggableViewStyle.top});
 
   },
 
@@ -67,29 +67,32 @@ var DayCalendar = React.createClass({
     return false;
   },
 
-  // _handleStartShouldSetPanResponder: function(e, gestureState) {
-  //   // Should we become active when the user presses down on the circle?
-  //   return true;
-  // },
+  _handleStartShouldSetPanResponder: function(e, gestureState) {
+    // Should we become active when the user presses down on the circle?
+    console.log('_handleStartShouldSetPanResponder');
+    this.scrollView.setNativeProps({scrollEnabled: false});
+    return true;
+  },
 
-  // _handleMoveShouldSetPanResponder: function(e, gestureState) {
-  //   // Should we become active when the user moves a touch over the circle?
-  //   return true;
-  // },
+  _handleMoveShouldSetPanResponder: function(e, gestureState) {
+    // Should we become active when the user moves a touch over the circle?
+    return true;
+  },
 
   _handlePanResponderGrant: function(e, gestureState) {
     // this._highlight();
   },
 
   _handlePanResponderMove: function(e, gestureState) {
-    this.draggableEventBoxStyle.top = this.draggableEventBoxPreviousTop + gestureState.dy;
-    this._updateDraggableEventBoxPosition();
+    this.draggableViewStyle.top = this.draggableViewPreviousTop + gestureState.dy;
+    this._updateDraggableViewPosition();
   },
 
   _handlePanResponderEnd: function(e, gestureState) {
     // this._unHighlight();
     console.log("_handlePanResponderEnd");
-    this.draggableEventBoxPreviousTop += gestureState.dy;
+    this.scrollView.setNativeProps({scrollEnabled: true});
+    this.draggableViewPreviousTop += gestureState.dy;
   },
 
   render: function() {
@@ -118,15 +121,18 @@ var DayCalendar = React.createClass({
       return (<EventBox style={{position: 'absolute', top: eventBoxTop, height: eventBoxHeight, left: 80, right: 20}} title={event.title} />);
     };
 
+
+
+
 // {this.props.events.filter(isEventInDay).map(createEventBox.bind(this))}
     return (
-      <ScrollView onStartShouldSetResponderCapture={(evt)=>false} onMoveShouldSetResponderCapture={(evt)=>false}>
+      <ScrollView ref={(scrollView) => {this.scrollView = scrollView;}}>
         
         {HOURS.map(createTimeline)}
         
         
-        <View ref={(box) => {this.draggableEventBox = box;}} style={this.draggableEventBoxStyle} {...this.panResponder.panHandlers}>
-        <EventBox />
+        <View ref={(box) => {this.draggableView = box;}} style={this.draggableViewStyle} {...this.panResponder.panHandlers}>
+          <EventBox />
         </View>
 
       </ScrollView>
