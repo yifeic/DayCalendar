@@ -141,7 +141,7 @@ var DayCalendar = React.createClass({
   render: function() {
     var createTimeline = (time, i) => <Timeline key={i} time={time} style={i == HOURS_COUNT-1 ? styles.timelineLast : styles.timeline} />;
 
-    var eventBoxBaseStyle = {position: 'absolute', left: 80, right: 20};
+    var eventBoxBaseStyle = {position: 'absolute', left: 80, right: 20, borderRadius: 3, overflow: 'hidden', borderColor: 'rgba(195, 226, 242, 1.0)', borderWidth: 1.0};
 
     var createEventBox = (event, i) => {
 
