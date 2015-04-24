@@ -25,14 +25,22 @@ var DayCalendarDemo = React.createClass({
     end.setHours(19);
     end.setMinutes(0);
     end.setSeconds(0);
+
+
+    var startB = new Date(start);
+    startB.setHours(10);
+    var endB = new Date(end);
+    endB.setHours(11);
     var events = [
       {title: 'Lorem ipsum dolor sit amet, ius ad pertinax oportere accommodare,', startAt: start, endAt: end}
 
     ];
 
+    var newEvent = {title: 'aaa aaa bbbbb', startAt: startB, endAt: endB};
+
     return (
       <View style={styles.container}>
-      <DayCalendar style={styles.dayCalendar} newEvent={events[0]} />
+      <DayCalendar style={styles.dayCalendar} events={events} newEvent={newEvent} />
       </View>
     );
   }

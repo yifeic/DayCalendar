@@ -46,6 +46,12 @@ var DayCalendar = React.createClass({
     return { day: new Date(), events: [], timelineHeight: 1, timelineGap: 59 };
   },
 
+  getInitialState: function() {
+    return {
+      newEvent: this.props.newEvent
+    };
+  },
+
   componentWillMount: function() {
     this.panResponder = PanResponder.create({
       onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
@@ -92,14 +98,14 @@ var DayCalendar = React.createClass({
   },
 
   _handlePanResponderEnd: function(e, gestureState) {
-    // this._unHighlight();
+
     console.log("_handlePanResponderEnd");
     this.scrollView.setNativeProps({scrollEnabled: true});
     
     this.draggableViewPreviousTop += gestureState.dy;
   },
   _handleResizeResponderEnd: function(e, gestureState) {
-    // this._unHighlight();
+
     console.log("_handleResizeResponderEnd");
     this.scrollView.setNativeProps({scrollEnabled: true});
 
@@ -182,7 +188,7 @@ var DayCalendar = React.createClass({
         
         {HOURS.map(createTimeline)}
         {this._filteredEvents().map(createEventBox)}
-        {this.props.newEvent && createNewEventBox(this.props.newEvent)}
+        {this.state.newEvent && createNewEventBox(this.state.newEvent)}
 
       </ScrollView>
     );
