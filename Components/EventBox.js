@@ -24,6 +24,9 @@ var styles = StyleSheet.create({
   eventBox: {
     flex: 1,
     backgroundColor: 'rgba(234, 245, 252, 0.8)',
+    borderColor: 'rgba(195, 226, 242, 1.0)', 
+    borderWidth: 1.0,
+    borderRadius: 3,
   }
 });
 

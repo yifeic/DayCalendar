@@ -24,12 +24,17 @@ var MINUTES_INA_DAY = 60*24;
 var DayCalendar = React.createClass({
 
   panResponder: {},
+  resizeResponder: {},
   draggableViewPreviousTop: 0,
+  draggableViewPreviousHeight: 0,
   draggableView: null,
+  resizeHandleView: null,
   draggableViewTopAndHeight: {},
   scrollView: null,
 
-  propTypes: { 
+  propTypes: {
+    style: View.propTypes.style,
+    eventBoxStyle: View.propTypes.style,
     day: React.PropTypes.instanceOf(Date), 
     events: React.PropTypes.array,
     newEvent: React.PropTypes.object,
@@ -38,23 +43,27 @@ var DayCalendar = React.createClass({
   },
 
   getDefaultProps: function() {
-    return { day: new Date(), events: [], newEvent: null, timelineHeight: 1, timelineGap: 59 };
+    return { day: new Date(), events: [], timelineHeight: 1, timelineGap: 59 };
   },
 
   componentWillMount: function() {
     this.panResponder = PanResponder.create({
       onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
-      onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
-      onPanResponderGrant: this._handlePanResponderGrant,
       onPanResponderMove: this._handlePanResponderMove,
-      onPanResponderTerminationRequest: this._onResponderTerminationRequest,
       onPanResponderRelease: this._handlePanResponderEnd,
       onPanResponderTerminate: this._handlePanResponderEnd,
+    });
+    this.resizeResponder = PanResponder.create({
+      onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
+      onPanResponderMove: this._handleResizeResponderMove,
+      onPanResponderRelease: this._handleResizeResponderEnd,
+      onPanResponderTerminate: this._handleResizeResponderEnd,
     });
 
     if (this.props.newEvent) {
       this.draggableViewTopAndHeight = this._topAndHeightFromEvent(this.props.newEvent);
       this.draggableViewPreviousTop = this.draggableViewTopAndHeight.top;
+      this.draggableViewPreviousHeight = this.draggableViewTopAndHeight.height;
     }
   },
 
@@ -66,11 +75,6 @@ var DayCalendar = React.createClass({
     this.draggableView && this.draggableView.setNativeProps(this.draggableViewTopAndHeight);
   },
 
-  _onResponderTerminationRequest: function() {
-    console.log('onResponderTerminationRequest');
-    return false;
-  },
-
   _handleStartShouldSetPanResponder: function(e, gestureState) {
     // Should we become active when the user presses down on the circle?
     console.log('_handleStartShouldSetPanResponder');
@@ -78,17 +82,12 @@ var DayCalendar = React.createClass({
     return true;
   },
 
-  _handleMoveShouldSetPanResponder: function(e, gestureState) {
-    // Should we become active when the user moves a touch over the circle?
-    return true;
-  },
-
-  _handlePanResponderGrant: function(e, gestureState) {
-    // this._highlight();
-  },
-
   _handlePanResponderMove: function(e, gestureState) {
     this.draggableViewTopAndHeight.top = this.draggableViewPreviousTop + gestureState.dy;
+    this._updateDraggableViewPosition();
+  },
+  _handleResizeResponderMove: function(e, gestureState) {
+    this.draggableViewTopAndHeight.height = this.draggableViewPreviousHeight + gestureState.dy;
     this._updateDraggableViewPosition();
   },
 
@@ -96,7 +95,15 @@ var DayCalendar = React.createClass({
     // this._unHighlight();
     console.log("_handlePanResponderEnd");
     this.scrollView.setNativeProps({scrollEnabled: true});
+    
     this.draggableViewPreviousTop += gestureState.dy;
+  },
+  _handleResizeResponderEnd: function(e, gestureState) {
+    // this._unHighlight();
+    console.log("_handleResizeResponderEnd");
+    this.scrollView.setNativeProps({scrollEnabled: true});
+
+    this.draggableViewPreviousHeight += gestureState.dy;
   },
 
   _beginOfDay: function() {
@@ -139,15 +146,23 @@ var DayCalendar = React.createClass({
   },
 
   render: function() {
-    var createTimeline = (time, i) => <Timeline key={i} time={time} style={i == HOURS_COUNT-1 ? styles.timelineLast : styles.timeline} />;
+    var timelineStyles = StyleSheet.create({
+      timeline: {
+        height: this.props.timelineHeight,
+        marginBottom: this.props.timelineGap,
+      },
+      timelineLast: {
+        height: this.props.timelineHeight,
+      },
+    });
 
-    var eventBoxBaseStyle = {position: 'absolute', left: 80, right: 20, borderRadius: 3, overflow: 'hidden', borderColor: 'rgba(195, 226, 242, 1.0)', borderWidth: 1.0};
+    var createTimeline = (time, i) => <Timeline key={i} time={time} style={i == HOURS_COUNT-1 ? timelineStyles.timelineLast : timelineStyles.timeline} />;
 
     var createEventBox = (event, i) => {
 
       var topAndHeight = this._topAndHeightFromEvent(event);
 
-      return (<EventBox style={[eventBoxBaseStyle, topAndHeight]} title={event.title} />);
+      return (<EventBox style={[styles.eventBoxPosition, topAndHeight, this.props.eventBoxStyle]} title={event.title} />);
     };
 
     var createNewEventBox = (event) => {
@@ -155,8 +170,9 @@ var DayCalendar = React.createClass({
       var topAndHeight = this._topAndHeightFromEvent(event);
 
       return (
-        <View ref={(box) => {this.draggableView = box;}} style={[eventBoxBaseStyle, topAndHeight]} {...this.panResponder.panHandlers}>
-          <EventBox title={event.title}/>
+        <View ref={(box) => {this.draggableView = box;}} style={[styles.eventBoxPosition, topAndHeight]} {...this.panResponder.panHandlers}>
+          <EventBox style={this.props.eventBoxStyle} title={event.title}/>
+          <View ref={(view) => {this.resizeHandleView = view;}} style={styles.resizeHandleView} {...this.resizeResponder.panHandlers}/>
         </View>
       );
     };
@@ -175,17 +191,11 @@ var DayCalendar = React.createClass({
 
 
 var styles = StyleSheet.create({
-  eventContainer: {
-    position: 'absolute',
-    top: 0,
-    paddingLeft: 90,
+  eventBoxPosition: {
+    position: 'absolute', left: 80, right: 20,
   },
-  timeline: {
-    height: 1,
-    marginBottom: 60,
-  },
-  timelineLast: {
-    height: 1,
+  resizeHandleView: {
+    position: 'absolute', right:10, bottom: 0, width: 30, height: 20, backgroundColor: 'red'
   }
 });
 
