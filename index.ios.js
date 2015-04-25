@@ -7,12 +7,21 @@
 var React = require('react-native');
 var DayCalendar = require('./Components/DayCalendar');
 
+
 var {
   AppRegistry,
   StyleSheet,
   Text,
   View,
 } = React;
+
+var startAtChange = function(newStartAt) {
+  console.log('newStartAt', newStartAt);
+};
+
+var lengthChange = function(newLength) {
+  console.log('newLength', newLength);
+};
 
 var DayCalendarDemo = React.createClass({
   render: function() {
@@ -21,26 +30,26 @@ var DayCalendarDemo = React.createClass({
     start.setHours(17);
     start.setMinutes(0);
     start.setSeconds(0);
-    var end = new Date();
-    end.setHours(19);
-    end.setMinutes(0);
-    end.setSeconds(0);
 
 
     var startB = new Date(start);
     startB.setHours(10);
-    var endB = new Date(end);
-    endB.setHours(11);
+
     var events = [
-      {title: 'Lorem ipsum dolor sit amet, ius ad pertinax oportere accommodare,', startAt: start, endAt: end}
+      {title: 'Lorem ipsum dolor sit amet, ius ad pertinax oportere accommodare,', startAt: start, length: 90}
 
     ];
 
-    var newEvent = {title: 'aaa aaa bbbbb', startAt: startB, endAt: endB};
+    var newEvent = {title: 'aaa aaa bbbbb', startAt: startB, length: 60};
 
     return (
       <View style={styles.container}>
-      <DayCalendar style={styles.dayCalendar} events={events} newEvent={newEvent} />
+        <DayCalendar 
+          style={styles.dayCalendar} 
+          events={events} 
+          newEvent={newEvent} 
+          onNewEventStartAtChange={startAtChange}
+          onNewEventLengthChange={lengthChange} />
       </View>
     );
   }
