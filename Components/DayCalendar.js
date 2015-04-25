@@ -31,6 +31,9 @@ var DayCalendar = React.createClass({
   resizeHandleView: null,
   draggableViewTopAndHeight: {},
   scrollView: null,
+  totalHeight: 0,
+  beginOfDay: null,
+  endOfDay: null,
 
   propTypes: {
     style: View.propTypes.style,
@@ -52,6 +55,18 @@ var DayCalendar = React.createClass({
     };
   },
 
+  _onPropsChange: function(props) {
+    this.totalHeight = (HOURS_COUNT-1) * (props.timelineGap + props.timelineHeight);
+    this.beginOfDay = moment(props.day).hour(0).minute(0).second(0);
+    this.endOfDay = moment(props.day).hour(24).minute(0).second(0);
+
+    if (this.props.newEvent) {
+      this.draggableViewTopAndHeight = this._topAndHeightFromEvent(props.newEvent);
+      this.draggableViewPreviousTop = this.draggableViewTopAndHeight.top;
+      this.draggableViewPreviousHeight = this.draggableViewTopAndHeight.height;
+    }
+  },
+
   componentWillMount: function() {
     this.panResponder = PanResponder.create({
       onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
@@ -66,11 +81,14 @@ var DayCalendar = React.createClass({
       onPanResponderTerminate: this._handleResizeResponderEnd,
     });
 
-    if (this.props.newEvent) {
-      this.draggableViewTopAndHeight = this._topAndHeightFromEvent(this.props.newEvent);
-      this.draggableViewPreviousTop = this.draggableViewTopAndHeight.top;
-      this.draggableViewPreviousHeight = this.draggableViewTopAndHeight.height;
-    }
+    this._onPropsChange(this.props);
+  },
+
+  componentWillReceiveProps: function(nextProps) {
+    this._onPropsChange(nextProps);
+    this.setState({
+      newEvent: nextProps.newEvent
+    });
   },
 
   componentDidMount: function() {
@@ -112,17 +130,9 @@ var DayCalendar = React.createClass({
     this.draggableViewPreviousHeight += gestureState.dy;
   },
 
-  _beginOfDay: function() {
-    return moment(this.props.day).hour(0).minute(0).second(0);
-  },
-
-  _endOfDay: function () {
-    return moment(this.props.day).hour(24).minute(0).second(0);
-  },
-
   _topAndHeightFromEvent: function(event) {
-    var beginOfDay = this._beginOfDay();
-    var endOfDay = this._endOfDay();
+    var beginOfDay = this.beginOfDay;
+    var endOfDay = this.endOfDay;
 
     var startAt = beginOfDay.isAfter(event.startAt) ? beginOfDay : moment(event.startAt);
     var endAt = endOfDay.isBefore(event.endAt) ? endOfDay : moment(event.endAt);
@@ -132,23 +142,25 @@ var DayCalendar = React.createClass({
 
     var startAtInMinutes = startAt.diff(beginOfDay, 'minutes');
     var lengthInMinutes = endAt.diff(startAt, 'minutes');
-
-    var totalHeight = (HOURS_COUNT-1) * (this.props.timelineGap + this.props.timelineHeight);
     
-    var top = startAtInMinutes / MINUTES_INA_DAY * totalHeight;
-    var height = lengthInMinutes / MINUTES_INA_DAY * totalHeight;
+    var top = startAtInMinutes / MINUTES_INA_DAY * this.totalHeight;
+    var height = lengthInMinutes / MINUTES_INA_DAY * this.totalHeight;
 
     return {top, height};
   },
 
   _isEventInDay: function(event) {
-    var beginOfDay = this._beginOfDay();
-    var endOfDay = this._endOfDay();
-    return !(endOfDay.isBefore(event.startAt) || beginOfDay.isAfter(event.endAt));
+    return !(this.endOfDay.isBefore(event.startAt) || this.beginOfDay.isAfter(event.endAt));
   },
 
   _filteredEvents: function() {
     return this.props.events.filter(this._isEventInDay);
+  },
+
+  _dateFromY: function(y) {
+    var minutes = Math.round(y / this.totalHeight * MINUTES_INA_DAY);
+
+    return moment(this.beginOfDay).add(minutes, 'minutes');
   },
 
   render: function() {
