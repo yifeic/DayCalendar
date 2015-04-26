@@ -1,3 +1,5 @@
+
+
 'use strict';
 
 var React = require('react-native');
@@ -11,7 +13,14 @@ var {
   View,
   Text,
   PanResponder,
+  Image,
 } = React;
+
+type Event = {
+  title: string;
+  startAt: Date;
+  length: number;
+};
 
 var HOURS_COUNT = 25;
 var HOURS = [];
@@ -27,10 +36,10 @@ var DayCalendar = React.createClass({
   resizeResponder: {},
   draggableViewPreviousTop: 0,
   draggableViewPreviousHeight: 0,
-  draggableView: null,
-  resizeHandleView: null,
+  draggableView: (null : ?{ setNativeProps(props: Object): void }),
+  resizeHandleView: (null : ?{ setNativeProps(props: Object): void }),
   draggableViewTopAndHeight: {},
-  scrollView: null,
+  scrollView: (null : ?{ setNativeProps(props: Object): void }),
   totalHeight: 0,
   beginOfDay: null,
   endOfDay: null,
@@ -38,11 +47,11 @@ var DayCalendar = React.createClass({
   propTypes: {
     style: View.propTypes.style,
     eventBoxStyle: View.propTypes.style,
-    day: React.PropTypes.instanceOf(Date), 
-    events: React.PropTypes.array,
+    day: React.PropTypes.instanceOf(Date).isRequired, 
+    events: React.PropTypes.array.isRequired,
     newEvent: React.PropTypes.object,
-    timelineHeight: React.PropTypes.number,
-    timelineGap: React.PropTypes.number,
+    timelineHeight: React.PropTypes.number.isRequired,
+    timelineGap: React.PropTypes.number.isRequired,
     onNewEventStartAtChange: React.PropTypes.func,
     onNewEventLengthChange: React.PropTypes.func,
   },
@@ -62,7 +71,7 @@ var DayCalendar = React.createClass({
     this.beginOfDay = moment(props.day).hour(0).minute(0).second(0);
     this.endOfDay = moment(props.day).hour(24).minute(0).second(0);
 
-    if (this.props.newEvent) {
+    if (props.newEvent != null) {
       this.draggableViewTopAndHeight = this._topAndHeightFromEvent(props.newEvent);
       this.draggableViewPreviousTop = this.draggableViewTopAndHeight.top;
       this.draggableViewPreviousHeight = this.draggableViewTopAndHeight.height;
@@ -101,23 +110,23 @@ var DayCalendar = React.createClass({
     this.draggableView && this.draggableView.setNativeProps(this.draggableViewTopAndHeight);
   },
 
-  _handleStartShouldSetPanResponder: function(e, gestureState) {
+  _handleStartShouldSetPanResponder: function(e: Object, gestureState: Object): boolean {
     // Should we become active when the user presses down on the circle?
     console.log('_handleStartShouldSetPanResponder');
     this.scrollView.setNativeProps({scrollEnabled: false});
     return true;
   },
 
-  _handlePanResponderMove: function(e, gestureState) {
+  _handlePanResponderMove: function(e: Object, gestureState: Object) {
     this.draggableViewTopAndHeight.top = this.draggableViewPreviousTop + gestureState.dy;
     this._updateDraggableViewPosition();
   },
-  _handleResizeResponderMove: function(e, gestureState) {
+  _handleResizeResponderMove: function(e: Object, gestureState: Object) {
     this.draggableViewTopAndHeight.height = this.draggableViewPreviousHeight + gestureState.dy;
     this._updateDraggableViewPosition();
   },
 
-  _handlePanResponderEnd: function(e, gestureState) {
+  _handlePanResponderEnd: function(e: Object, gestureState: Object) {
 
     console.log("_handlePanResponderEnd");
     this.scrollView.setNativeProps({scrollEnabled: true});
@@ -135,7 +144,7 @@ var DayCalendar = React.createClass({
       }
     });
   },
-  _handleResizeResponderEnd: function(e, gestureState) {
+  _handleResizeResponderEnd: function(e: Object, gestureState: Object) {
 
     console.log("_handleResizeResponderEnd");
     this.scrollView.setNativeProps({scrollEnabled: true});
@@ -154,7 +163,7 @@ var DayCalendar = React.createClass({
     });
   },
 
-  _topAndHeightFromEvent: function(event) {
+  _topAndHeightFromEvent: function(event: Event): {top: number; height: number} {
     var beginOfDay = this.beginOfDay;
     var endOfDay = this.endOfDay;
 
@@ -172,22 +181,22 @@ var DayCalendar = React.createClass({
     return {top, height};
   },
 
-  _isEventInDay: function(event) {
+  _isEventInDay: function(event: Event): boolean {
     var endAt = moment(event.startAt).add(event.length, 'minutes');
     return !(this.endOfDay.isBefore(event.startAt) || this.beginOfDay.isAfter(endAt));
   },
 
-  _filteredEvents: function() {
+  _filteredEvents: function(): Array<Event> {
     return this.props.events.filter(this._isEventInDay);
   },
 
-  _dateFromY: function(y) {
+  _dateFromY: function(y: number): Date {
     var minutes = Math.round(y / this.totalHeight * MINUTES_INA_DAY);
 
     return moment(this.beginOfDay).add(minutes, 'minutes').toDate();
   },
 
-  _minutesFromPt: function(pt) {
+  _minutesFromPt: function(pt: number): number {
     return Math.round(pt / this.totalHeight * MINUTES_INA_DAY);
   },
 
@@ -219,8 +228,8 @@ var DayCalendar = React.createClass({
 
       return (
         <View ref={(box) => {this.draggableView = box;}} style={[styles.eventBoxPosition, topAndHeight]} {...this.panResponder.panHandlers}>
-          <EventBox style={this.props.eventBoxStyle} title={event.title}/>
-          <View ref={(view) => {this.resizeHandleView = view;}} style={styles.resizeHandleView} {...this.resizeResponder.panHandlers}/>
+          <EventBox style={[this.props.eventBoxStyle, styles.newEventBox]} title={event.title}/>
+          <Image ref={(view) => {this.resizeHandleView = view;}} source={require('image!icon-drag')} style={styles.resizeHandleView} {...this.resizeResponder.panHandlers}/>
         </View>
       );
     };
@@ -242,8 +251,12 @@ var styles = StyleSheet.create({
   eventBoxPosition: {
     position: 'absolute', left: 80, right: 20,
   },
+  newEventBox: {
+    backgroundColor: 'rgba(94, 190, 255, 0.8)',
+    borderWidth: 0,
+  },
   resizeHandleView: {
-    position: 'absolute', right:10, bottom: 0, width: 30, height: 20, backgroundColor: 'red'
+    position: 'absolute', right:0, bottom: -5, width: 40, height: 40,
   }
 });
 

@@ -10,7 +10,7 @@ var {
 class EventBox extends React.Component {
   render() {
     return (
-      <View style={[this.props.style, styles.eventBox]}>
+      <View style={[styles.eventBox, this.props.style]}>
         <Text>{this.props.title}</Text>
         
       </View>
