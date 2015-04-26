@@ -126,6 +126,14 @@ var DayCalendar = React.createClass({
 
     var newStartAt = this._dateFromY(this.draggableViewPreviousTop);
     this.props.onNewEventStartAtChange && this.props.onNewEventStartAtChange(newStartAt);
+
+    this.setState({
+      newEvent: {
+        title: this.state.newEvent.title,
+        startAt: newStartAt,
+        length: this.state.newEvent.length
+      }
+    });
   },
   _handleResizeResponderEnd: function(e, gestureState) {
 
@@ -135,7 +143,15 @@ var DayCalendar = React.createClass({
     this.draggableViewPreviousHeight += gestureState.dy;
 
     var newLength = this._minutesFromPt(this.draggableViewPreviousHeight);
-    this.props.onNewEventStartAtChange && this.props.onNewEventLengthChange(newLength);
+    this.props.onNewEventLengthChange && this.props.onNewEventLengthChange(newLength);
+
+    this.setState({
+      newEvent: {
+        title: this.state.newEvent.title,
+        startAt: this.state.newEvent.startAt,
+        length: newLength
+      }
+    });
   },
 
   _topAndHeightFromEvent: function(event) {
@@ -176,6 +192,8 @@ var DayCalendar = React.createClass({
   },
 
   render: function() {
+    console.log('render');
+
     var timelineStyles = StyleSheet.create({
       timeline: {
         height: this.props.timelineHeight,
@@ -186,13 +204,13 @@ var DayCalendar = React.createClass({
       },
     });
 
-    var createTimeline = (time, i) => <Timeline key={i} time={time} style={i == HOURS_COUNT-1 ? timelineStyles.timelineLast : timelineStyles.timeline} />;
+    var createTimeline = (time, i) => <Timeline key={'time'+i} time={time} style={i == HOURS_COUNT-1 ? timelineStyles.timelineLast : timelineStyles.timeline} />;
 
     var createEventBox = (event, i) => {
 
       var topAndHeight = this._topAndHeightFromEvent(event);
 
-      return (<EventBox style={[styles.eventBoxPosition, topAndHeight, this.props.eventBoxStyle]} title={event.title} />);
+      return (<EventBox key={i} style={[styles.eventBoxPosition, topAndHeight, this.props.eventBoxStyle]} title={event.title} />);
     };
 
     var createNewEventBox = (event) => {
